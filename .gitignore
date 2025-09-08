@@ -1,0 +1,13 @@
+# .gitignore
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Env
+.env
+
+# WhatsApp Session
+auth_bot.json
+
+auth_info_baileys

@@ -1,0 +1,17 @@
+{
+  "name": "whatsapp-support-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp support bot using Baileys",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.19",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.4.1",
+    "qrcode-terminal": "^0.12.0",
+    "sha256": "^0.2.0"
+  }
+}
