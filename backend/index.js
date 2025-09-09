@@ -190,8 +190,15 @@ async function processIncomingQueue() {
 
         if (createError) throw new Error(createError.message);
 
-        // insert the originating message
-        await supabase.from('messages').insert({ ticket_id: newTicket.id, source: 'user', body: originalText });
+        // insert the originating message (include image_url if present)
+        const { error: msgInsertError } = await supabase.from('messages').insert({
+          ticket_id: newTicket.id,
+          source: 'user',
+          body: originalText,
+          image_url: job.imageUrl ?? null,
+        });
+
+        if (msgInsertError) throw new Error(msgInsertError.message);
 
         const confirmationText = `Ticket *${newTicket.ticket_id_text}* has been created.`;
         await redis.lpush('queue:outgoing', JSON.stringify({ to: job.groupJid, text: confirmationText, meta: { origin: 'ticket_created', ticketId: newTicket.id } }));
@@ -235,16 +242,26 @@ async function processIncomingQueue() {
         if (createError) throw new Error(createError.message);
         ticket = newTicket;
         console.log(`Created fallback ticket #${ticket.ticket_number ?? ticket.id}`);
+
+        // insert the originating message for the newly-created fallback ticket (include image_url if present)
+        const { error: firstMsgError } = await supabase.from('messages').insert({
+          ticket_id: ticket.id,
+          source: 'user',
+          body: originalText,
+          image_url: job.imageUrl ?? null,
+        });
+
+        if (firstMsgError) throw new Error(firstMsgError.message);
       } else {
         console.log(`Found existing ticket #${ticket.ticket_number ?? ticket.id}`);
+
+        // insert user's message into the existing ticket (include image_url if present)
+        const { error: msgError } = await supabase
+          .from('messages')
+          .insert({ ticket_id: ticket.id, source: 'user', body: originalText, image_url: job.imageUrl ?? null });
+
+        if (msgError) throw new Error(msgError.message);
       }
-
-      // insert user's message
-      const { error: msgError } = await supabase
-        .from('messages')
-        .insert({ ticket_id: ticket.id, source: 'user', body: originalText });
-
-      if (msgError) throw new Error(msgError.message);
 
       // enqueue a confirmation back to group
       const confirmationText = isNewTicket
